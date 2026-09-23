@@ -53,19 +53,3 @@ int mem_update(MemoryInfo *mem) {
 
     return 0;
 }
-
-void mem_print(const MemoryInfo *mem) {
-    printf("Memory:  %6.2f %s / %.2f %s  (%.1f%%)\n",
-           mem->used.value, mem->used.unit,
-           mem->total.value, mem->total.unit,
-           mem->mainUsagePercent);
-
-    if (mem->swapTotal.value > 0) {
-        printf("Swap:    %6.2f %s / %.2f %s  (%.1f%%)\n",
-               mem->swapUsed.value, mem->swapUsed.unit,
-               mem->swapTotal.value, mem->swapTotal.unit,
-               mem->swapUsagePercent);
-    } else {
-        printf("Swap:    none\n");
-    }
-}

@@ -17,6 +17,4 @@ typedef struct {
    numbers. Returns 0 on success, -1 on failure. */
 int  mem_update(MemoryInfo *mem);
 
-void mem_print(const MemoryInfo *mem);
-
 #endif /* MEM_H */

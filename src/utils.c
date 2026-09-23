@@ -146,3 +146,15 @@ SizeInfo size_from_bytes(double bytes) {
     s.value = (float)bytes;
     return s;
 }
+
+double size_to_bytes(SizeInfo size) {
+    double v = size.value;
+    switch (size.unit[0]) {
+        case 'T': v *= 1024.0; /* fall through */
+        case 'G': v *= 1024.0; /* fall through */
+        case 'M': v *= 1024.0; /* fall through */
+        case 'K': v *= 1024.0; /* fall through */
+        default:  break;
+    }
+    return v;
+}

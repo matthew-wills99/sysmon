@@ -273,41 +273,6 @@ int cpu_update(CpuInfo *cpu) {
 }
 
 /* 93784 -> "1d 02h 03m 04s" */
-static void format_uptime(unsigned long long secs, char *buf, size_t n) {
-    unsigned long long d = secs / 86400;
-    unsigned long long h = (secs % 86400) / 3600;
-    unsigned long long m = (secs % 3600) / 60;
-    unsigned long long s = secs % 60;
-
-    if (d > 0) snprintf(buf, n, "%llud %02lluh %02llum %02llus", d, h, m, s);
-    else       snprintf(buf, n, "%02lluh %02llum %02llus", h, m, s);
-}
-
-void cpu_print(const CpuInfo *cpu) {
-    char uptime[48];
-    format_uptime(cpu->uptimeSeconds, uptime, sizeof uptime);
-
-    char boot[32] = "unknown";
-    time_t t = (time_t)cpu->bootTime;
-    struct tm *tm = localtime(&t);
-    if (tm) strftime(boot, sizeof boot, "%Y-%m-%d %H:%M:%S", tm);
-
-    printf("CPU:              %s\n", cpu->name);
-    printf("Physical cores:   %d\n", cpu->physicalCores);
-    printf("Threads:          %d\n", cpu->threads);
-    printf("Cores detected:   %zu\n", cpu->coreCount);
-    printf("Boot time:        %s\n", boot);
-    printf("Uptime:           %s\n", uptime);
-    printf("Total usage:      %.1f%%\n\n", cpu->usagePercent);
-
-    for (size_t i = 0; i < cpu->coreCount; i++) {
-        printf("%-8s  %8.2f MHz  %5.1f%%\n",
-               cpu->cores[i].name,
-               cpu->cores[i].clockSpeed,
-               cpu->cores[i].usagePercent);
-    }
-}
-
 void cpu_free(CpuInfo *cpu) {
     free(cpu->cores);
     cpu->cores = NULL;

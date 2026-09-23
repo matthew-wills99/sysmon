@@ -25,15 +25,15 @@ typedef struct {
     int hasSample;
 } NetworkList;
 
-/* Finds the physical network interfaces and takes a baseline sample.
+/* Finds the physical network interfaces (or every interface with
+   includeVirtual) and takes a baseline sample.
    Returns 0 on success, non-zero on failure. Pair with net_free(). */
-int  net_init(NetworkList *list);
+int  net_init(NetworkList *list, int includeVirtual);
 
 /* Takes a new sample. Speeds are calculated between this call and the
    previous one, so call it on an interval. Returns 0 on success, -1 on failure. */
 int  net_update(NetworkList *list);
 
-void net_print(const NetworkList *list);
 void net_free(NetworkList *list);
 
 #endif /* NET_H */

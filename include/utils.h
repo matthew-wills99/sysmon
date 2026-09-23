@@ -17,6 +17,9 @@ typedef struct {
 /* Converts a byte count to the largest sensible unit ("B", "K", "M", "G", "T"). */
 SizeInfo size_from_bytes(double bytes);
 
+/* The reverse of size_from_bytes */
+double size_to_bytes(SizeInfo size);
+
 /* ---- File / string helpers (utils.c) ---- */
 
 void   free_kv_pairs(kv_pair *entries, size_t count);

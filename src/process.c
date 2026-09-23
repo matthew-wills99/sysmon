@@ -30,15 +30,6 @@ static int compare_pid(const void *a, const void *b) {
 }
 
 /* Highest CPU first, then highest memory, then lowest pid */
-static int compare_cpu_desc(const void *a, const void *b) {
-    const ProcessInfo *pa = *(const ProcessInfo *const *)a;
-    const ProcessInfo *pb = *(const ProcessInfo *const *)b;
-
-    if (pa->CPUPercent != pb->CPUPercent) return (pa->CPUPercent < pb->CPUPercent) ? 1 : -1;
-    if (pa->memPercent != pb->memPercent) return (pa->memPercent < pb->memPercent) ? 1 : -1;
-    return (pa->pid > pb->pid) - (pa->pid < pb->pid);
-}
-
 static int add_process(ProcessList *list, const ProcessInfo *p) {
     /* if the process list is already at capacity, increase it or initialize it if needed */
     if (list->count == list->capacity) {
@@ -51,6 +42,50 @@ static int add_process(ProcessList *list, const ProcessInfo *p) {
     }
     list->items[list->count++] = *p;
     return 0;
+}
+
+/* The kernel's comm name is cut to 15 characters and often unhelpful (every
+   Firefox child is "Isolated Web Co"), so prefer argv[0] without its directory.
+   Processes that retitle themselves ("sshd: user@pts/0") keep their title. */
+static void apply_cmdline_name(int pid, ProcessInfo *p) {
+    char path[64];
+    snprintf(path, sizeof path, "/proc/%d/cmdline", pid);
+
+    FILE *f = fopen(path, "r");
+    if (!f) return;
+    char buf[256];
+    size_t n = fread(buf, 1, sizeof buf - 1, f);
+    fclose(f);
+    if (n == 0) return;                          /* kernel thread or zombie: keep comm */
+    buf[n] = '\0';
+
+    const char *arg0 = buf;                      /* stops at the first NUL between arguments */
+    if (arg0[0] == '\0') return;
+    if (arg0[0] == '/') {
+        const char *slash = strrchr(arg0, '/');
+        if (slash && slash[1]) arg0 = slash + 1;
+    }
+    size_t len = strlen(arg0);                   /* long names are simply cut to fit */
+    if (len >= sizeof p->name) len = sizeof p->name - 1;
+    memcpy(p->name, arg0, len);
+    p->name[len] = '\0';
+}
+
+int process_cmdline(int pid, char *buf, size_t n) {
+    if (n == 0) return -1;
+    char path[64];
+    snprintf(path, sizeof path, "/proc/%d/cmdline", pid);
+
+    FILE *f = fopen(path, "r");
+    if (!f) return -1;
+    size_t got = fread(buf, 1, n - 1, f);
+    fclose(f);
+
+    for (size_t i = 0; i < got; i++)
+        if (buf[i] == '\0') buf[i] = ' ';
+    while (got > 0 && buf[got - 1] == ' ') got--;
+    buf[got] = '\0';
+    return got > 0 ? 0 : -1;
 }
 
 /* Fills in pid, name, cpuTicks and the memory figures from /proc/<pid>/stat.
@@ -94,6 +129,8 @@ static int read_process(int pid, const ProcessList *list, ProcessInfo *p) {
 
     if (rssPages < 0) rssPages = 0;
     unsigned long long usedBytes = (unsigned long long)rssPages * (unsigned long long)list->pageSize;
+
+    apply_cmdline_name(pid, p);
 
     p->cpuTicks = utime + stime;
     p->memUsed  = size_from_bytes((double)usedBytes);
@@ -197,32 +234,6 @@ int process_update(ProcessList *list) {
     list->lastSample = now;
     list->hasSample = 1;
     return 0;
-}
-
-void process_print(const ProcessList *list, size_t limit) {
-    if (list->count == 0) {
-        printf("Processes: none\n");
-        return;
-    }
-
-    /* Sort pointers, not the list itself, since the list must stay ordered by pid */
-    const ProcessInfo **view = malloc(list->count * sizeof *view);
-    if (!view) return;
-    for (size_t i = 0; i < list->count; i++) view[i] = &list->items[i];
-    qsort(view, list->count, sizeof *view, compare_cpu_desc);
-
-    size_t rows = (limit == 0 || limit > list->count) ? list->count : limit;
-
-    printf("Processes: %zu total\n", list->count);
-    printf("%7s  %-16s %6s  %6s  %s\n", "PID", "NAME", "CPU%", "MEM%", "MEMORY");
-    for (size_t i = 0; i < rows; i++) {
-        const ProcessInfo *p = view[i];
-        printf("%7d  %-16s %5.1f%%  %5.1f%%  %.2f %s / %.2f %s\n",
-               p->pid, p->name, p->CPUPercent, p->memPercent,
-               p->memUsed.value, p->memUsed.unit,
-               p->memTotal.value, p->memTotal.unit);
-    }
-    free(view);
 }
 
 void process_free(ProcessList *list) {

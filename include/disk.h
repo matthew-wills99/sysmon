@@ -9,7 +9,8 @@
 enum DiskType {
     UNK,
     SSD,
-    HDD
+    HDD,
+    VRT                          /* not physical hardware (loop, dm, md, zram, ...) */
 };
 
 typedef struct {
@@ -36,15 +37,15 @@ typedef struct {
     int hasSample;
 } DiskList;
 
-/* Finds the physical disks, reads their static info and takes a baseline
-   sample. Returns 0 on success, non-zero on failure. Pair with disk_free(). */
-int  disk_init(DiskList *list);
+/* Finds the physical disks (or every block device with includeVirtual), reads
+   their static info and takes a baseline sample.
+   Returns 0 on success, non-zero on failure. Pair with disk_free(). */
+int  disk_init(DiskList *list, int includeVirtual);
 
 /* Takes a new sample. Read/write speeds are calculated between this call and
    the previous one, so call it on an interval. Returns 0 on success, -1 on failure. */
 int  disk_update(DiskList *list);
 
-void disk_print(const DiskList *list);
 void disk_free(DiskList *list);
 
 #endif /* DISK_H */

@@ -45,22 +45,16 @@ static int compare_disks(const void *a, const void *b) {
     return strcmp(((const DiskInfo *)a)->name, ((const DiskInfo *)b)->name);
 }
 
-static const char *type_name(enum DiskType t) {
-    switch (t) {
-        case HDD: return "HDD";
-        case SSD: return "SSD";
-        default:  return "???";
-    }
-}
-
 /* ------------------------------------------------------------------ */
 /* Discovering physical disks                                         */
 /* ------------------------------------------------------------------ */
 
 /* A block device counts as a physical disk if /sys/block/<name>/device exists
    and /sys/block/<name>/queue/rotational exists. This rules out loop, ram,
-   zram, dm-* and md* devices, which have no backing hardware. */
-static int discover_disks(DiskList *list) {
+   zram, dm-* and md* devices, which have no backing hardware. With
+   includeVirtual those are listed too (except empty ones, which have nothing
+   to show), marked as VRT. */
+static int discover_disks(DiskList *list, int includeVirtual) {
     DIR *d = opendir(SYS_BLOCK);
     if (!d) {
         perror("opendir " SYS_BLOCK);
@@ -78,7 +72,8 @@ static int discover_disks(DiskList *list) {
         char path[PATH_MAX];
 
         snprintf(path, sizeof path, SYS_BLOCK "/%s/" DEVICE_LINK, e->d_name);
-        if (!is_dir(path)) continue;
+        int physical = is_dir(path);
+        if (!physical && !includeVirtual) continue;
 
         unsigned long long rotational;
         snprintf(path, sizeof path, SYS_BLOCK "/%s/queue/rotational", e->d_name);
@@ -87,6 +82,7 @@ static int discover_disks(DiskList *list) {
         unsigned long long sectors = 0;
         snprintf(path, sizeof path, SYS_BLOCK "/%s/size", e->d_name);
         read_sysfs_ull(path, &sectors);   /* stays 0 if unreadable */
+        if (!physical && sectors == 0) continue;
 
         if (list->count == cap) {
             size_t newCap = cap ? cap * 2 : 8;
@@ -103,7 +99,7 @@ static int discover_disks(DiskList *list) {
         DiskInfo *disk = &list->items[list->count++];
         memset(disk, 0, sizeof *disk);
         memcpy(disk->name, e->d_name, nameLen + 1);
-        disk->type      = (rotational == 1) ? HDD : SSD;
+        disk->type      = !physical ? VRT : (rotational == 1) ? HDD : SSD;
         disk->sizeBytes = sectors * SECTOR_SIZE;
         disk->size      = size_from_bytes((double)disk->sizeBytes);
     }
@@ -170,7 +166,7 @@ static size_t collect_mounts(MountUsage *out, size_t max) {
         struct statvfs vfs;
         if (statvfs(mnt, &vfs) != 0) continue;
 
-        snprintf(out[n].dev, sizeof out[n].dev, "%s", dev);
+        memcpy(out[n].dev, dev, strlen(dev) + 1);           /* length checked above */
         out[n].usedBytes = (vfs.f_blocks > vfs.f_bfree)
                          ? (unsigned long long)(vfs.f_blocks - vfs.f_bfree) * vfs.f_frsize
                          : 0;
@@ -234,10 +230,10 @@ static void update_usage(DiskList *list) {
 /* Public API                                                         */
 /* ------------------------------------------------------------------ */
 
-int disk_init(DiskList *list) {
+int disk_init(DiskList *list, int includeVirtual) {
     memset(list, 0, sizeof *list);
 
-    if (discover_disks(list) != 0) return 1;
+    if (discover_disks(list, includeVirtual) != 0) return 1;
 
     /* Baseline sample; rates stay 0 until the next disk_update() */
     if (disk_update(list) != 0) {
@@ -301,24 +297,6 @@ int disk_update(DiskList *list) {
 
     update_usage(list);
     return 0;
-}
-
-void disk_print(const DiskList *list) {
-    if (list->count == 0) {
-        printf("Disks:   none detected\n");
-        return;
-    }
-
-    for (size_t i = 0; i < list->count; i++) {
-        const DiskInfo *d = &list->items[i];
-        printf("%-12s %-4s  %7.2f %s / %.2f %s  (%5.1f%%)   R %.2f %s/s   W %.2f %s/s\n",
-               d->name, type_name(d->type),
-               d->used.value, d->used.unit,
-               d->size.value, d->size.unit,
-               d->usagePercent,
-               d->readPerSecond.value, d->readPerSecond.unit,
-               d->writePerSecond.value, d->writePerSecond.unit);
-    }
 }
 
 void disk_free(DiskList *list) {

@@ -31,7 +31,7 @@ static int compare_interfaces(const void *a, const void *b) {
 
 /* An interface is physical if /sys/class/net/<name>/device exists. This rules
    out lo, bridges, veth pairs, docker0, tun/tap, VPNs and other virtual links. */
-static int discover_interfaces(NetworkList *list) {
+static int discover_interfaces(NetworkList *list, int includeVirtual) {
     DIR *d = opendir(SYS_NET);
     if (!d) {
         perror("opendir " SYS_NET);
@@ -49,7 +49,7 @@ static int discover_interfaces(NetworkList *list) {
 
         char path[PATH_MAX];
         snprintf(path, sizeof path, SYS_NET "/%s/device", e->d_name);
-        if (access(path, F_OK) != 0) continue;
+        if (!includeVirtual && access(path, F_OK) != 0) continue;
 
         if (list->count == cap) {
             size_t newCap = cap ? cap * 2 : 4;
@@ -78,10 +78,10 @@ static int discover_interfaces(NetworkList *list) {
 /* Public API                                                         */
 /* ------------------------------------------------------------------ */
 
-int net_init(NetworkList *list) {
+int net_init(NetworkList *list, int includeVirtual) {
     memset(list, 0, sizeof *list);
 
-    if (discover_interfaces(list) != 0) return 1;
+    if (discover_interfaces(list, includeVirtual) != 0) return 1;
 
     /* Baseline sample; speeds stay 0 until the next net_update() */
     if (net_update(list) != 0) {
@@ -142,21 +142,6 @@ int net_update(NetworkList *list) {
     list->lastSample = now;
     list->hasSample = 1;
     return 0;
-}
-
-void net_print(const NetworkList *list) {
-    if (list->count == 0) {
-        printf("Network: no physical interfaces\n");
-        return;
-    }
-
-    for (size_t i = 0; i < list->count; i++) {
-        const NetworkInfo *nic = &list->items[i];
-        printf("%-16s Down %.2f %s/s   Up %.2f %s/s\n",
-               nic->name,
-               nic->downPerSecond.value, nic->downPerSecond.unit,
-               nic->upPerSecond.value, nic->upPerSecond.unit);
-    }
 }
 
 void net_free(NetworkList *list) {

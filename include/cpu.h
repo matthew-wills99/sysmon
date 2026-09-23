@@ -45,7 +45,6 @@ int  cpu_init(CpuInfo *cpu);
    Returns 0 on success, -1 on failure. */
 int  cpu_update(CpuInfo *cpu);
 
-void cpu_print(const CpuInfo *cpu);
 void cpu_free(CpuInfo *cpu);
 
 #endif /* CPU_H */

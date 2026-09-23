@@ -8,7 +8,7 @@
 
 typedef struct {
     int pid;
-    char name[64];               /* the kernel's "comm" name, truncated to 15 characters */
+    char name[64];               /* program name: argv[0] without its path, else the kernel's comm name */
     float CPUPercent;
     float memPercent;            /* resident memory as a percentage of total RAM */
     SizeInfo memUsed;            /* resident memory (RSS) */
@@ -39,9 +39,10 @@ int  process_init(ProcessList *list);
    (in which case the previous list is left untouched). */
 int  process_update(ProcessList *list);
 
-/* Prints processes sorted by CPU usage, highest first. limit = 0 prints all. */
-void process_print(const ProcessList *list, size_t limit);
-
 void process_free(ProcessList *list);
+
+/* Writes the process's full command line (arguments joined by spaces) into buf.
+   Returns 0 on success, -1 if there isn't one (kernel threads) or it can't be read. */
+int  process_cmdline(int pid, char *buf, size_t n);
 
 #endif /* PROCESS_H */
