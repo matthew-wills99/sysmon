@@ -18,4 +18,49 @@ sysmon is a real-time system monitor for Linux terminals. It draws a colourful A
 
 ![Full layout](docs/full_layout.png)
 
+## Requirements
+
+* Linux
+* `gcc` and `make`
+* Ideally a 256 colour terminal
+
+## Install
+
+```sh
+git clone https://github.com/matthew-wills99/sysmon.git
+cd sysmon
+make
+sudo make install        # installs to /usr/local/bin/sysmon
+```
+
+To remove:
+```sh
+sudo make uninstall
+```
+
+To build & run in place (no install):
+```sh
+make
+./sysmon
+```
+
 ![Compact layout](docs/compact_layout_ocean_theme.png)
+
+## Usage
+
+```
+Usage: ./sysmon [options]
+```
+
+| Option | Description |
+| --- | --- |
+| `-i`, `--interval <ms>` | Refresh interval in milliseconds (100–3600000, default 1000) |
+| `--compact` | Draw with no logo or graphs in a smaller footprint |
+| `--no-color` | Run without colours |
+| `--all-net` | Include non-physical network interfaces |
+| `--all-disk` | Include all non-physical block devices |
+| `--theme <name>` | Colour theme: `default`, `ocean`, `neon` (default: `default`) |
+| `--gpu-info` | Force display GPU section |
+| `--gpu-debug` | Display GPU detection info, then exit |
+| `-h`, `--help` | Show the help message |
+| `-V`, `--version` | Show the version |
