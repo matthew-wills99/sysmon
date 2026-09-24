@@ -13,11 +13,9 @@ sysmon is a real-time system monitor for Linux terminals. It draws a colourful A
 - **Drives**: usage, size, current read/write information for each drive.
 - **Processes**: display all processes, sortable by PID, name, CPU & memory usage.
 - **Colour**: built to support 256 colour terminals, can support down to 8 colour terminals and black & white.
-- **Themes**: change between built-in themes with --themes, custom themes to come.
+- **Themes**: change between built-in themes with --theme, custom themes to come.
 - **Compact mode**: automatically adjust UI to fit the terminal, force with --compact.
-
-
 
 ![Full layout](docs/full_layout.png)
 
-![Compact layout](docs/compact_layout.png)
+![Compact layout](docs/compact_layout_ocean_theme.png)
