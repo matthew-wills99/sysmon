@@ -24,13 +24,15 @@ sysmon is a real-time system monitor for Linux terminals. It draws a colourful A
 * `gcc` and `make`
 * Ideally a 256 colour terminal
 
-## Install
+## Install & Run
 
 ```sh
 git clone https://github.com/matthew-wills99/sysmon.git
 cd sysmon
 make
 sudo make install        # installs to /usr/local/bin/sysmon
+
+sysmon
 ```
 
 To remove:
@@ -49,7 +51,7 @@ make
 ## Usage
 
 ```
-Usage: ./sysmon [options]
+Usage: sysmon [options]
 ```
 
 | Option | Description |
