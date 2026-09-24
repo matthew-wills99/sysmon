@@ -598,7 +598,7 @@ static void draw_gpu(Ui *ui, Rect r, int full) {
     for (int i = 0; i < n; i++)
         if (gl->items[i].hasUsage || gl->items[i].hasMem || gl->items[i].suspended) anyData = 1;
     if (!anyData) {
-        const char *msg = "no statistics (run with --gpu-info)";
+        const char *msg = "no statistics";
         scr_puts(s, ga.x + (ga.w - text_width(msg)) / 2, ga.y + ga.h / 2, ga.w, msg, STYLE(C_DIM, 0));
         return;
     }

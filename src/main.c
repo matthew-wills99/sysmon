@@ -68,8 +68,10 @@ static void usage(FILE *out, const char *prog) {
         "      --all-net        include non-physical network interfaces\n"
         "      --all-disk       include all non-physical block devices\n"
         "      --theme <name>   colour theme: %s (default: %s)\n"
-        "      --gpu-info       show how GPUs were detected, including any with no readable\n"
-        "                       data (which the display leaves out), then exit\n"
+        "      --gpu-info       also show GPUs with no readable data (as n/a) instead of\n"
+        "                       leaving them out of the display\n"
+        "      --gpu-debug      print a report of how GPUs were detected, including any\n"
+        "                       with no readable data, then exit without launching\n"
         "  -h, --help           show this help\n"
         "  -V, --version        show the version\n"
         "\n"
@@ -96,7 +98,7 @@ static void usage(FILE *out, const char *prog) {
 int main(int argc, char **argv)
 {
     long intervalMs = DEFAULT_INTERVAL_MS;
-    int flagNoColor = 0, flagAllNet = 0, flagAllDisk = 0, flagCompact = 0, flagGpuInfo = 0;
+    int flagNoColor = 0, flagAllNet = 0, flagAllDisk = 0, flagCompact = 0, flagGpuInfo = 0, flagGpuDebug = 0;
     const Theme *theme = &THEMES[0];
 
     static const struct option longOpts[] = {
@@ -107,7 +109,8 @@ int main(int argc, char **argv)
         { "all-net",  no_argument,       NULL, 2 },
         { "all-disk", no_argument,       NULL, 3 },
         { "compact",  no_argument,       NULL, 4 },
-        { "gpu-info", no_argument,       NULL, 5 },
+        { "gpu-info",  no_argument,      NULL, 5 },
+        { "gpu-debug", no_argument,      NULL, 7 },
         { "theme",    required_argument, NULL, 6 },
         { NULL, 0, NULL, 0 }
     };
@@ -133,6 +136,7 @@ int main(int argc, char **argv)
         case 3:   flagAllDisk = 1; break;
         case 4:   flagCompact = 1; break;
         case 5:   flagGpuInfo = 1; break;
+        case 7:   flagGpuDebug = 1; break;
         case 6:
             theme = theme_find(optarg);
             if (!theme) {
@@ -150,8 +154,8 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    if (flagGpuInfo) {                            /* diagnostics only: no terminal needed */
-        GpuPaths paths = { NULL, NULL, NULL, stdout };
+    if (flagGpuDebug) {                           /* diagnostics only: no terminal needed */
+        GpuPaths paths = { NULL, NULL, NULL, stdout, 1 };
         GpuList probe;
         gpu_init_with(&probe, &paths);
         gpu_free(&probe);
@@ -192,7 +196,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Failed to initialise network stats\n");
         goto free_disk;
     }
-    gpu_init(&gpus);                               /* never fails: having no GPU is normal */
+    gpu_init(&gpus, flagGpuInfo);                  /* never fails: having no GPU is normal */
     if (process_init(&procs) != 0) {
         fprintf(stderr, "Failed to initialise process stats\n");
         goto free_gpu;

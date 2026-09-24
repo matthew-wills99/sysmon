@@ -51,12 +51,13 @@ typedef struct {
     const char *drm;             /* /sys/class/drm */
     const char *pci;             /* /sys/bus/pci/devices */
     const char *pciIds;          /* pci.ids database (for model names) */
-    FILE *log;                   /* if set, explains what was tried and what was found (--gpu-info) */
+    FILE *log;                   /* if set, explains what was tried and what was found (--gpu-debug) */
+    int showDataless;            /* if set, keep GPUs with nothing readable instead of dropping them (--gpu-info) */
 } GpuPaths;
 
 /* Finds NVIDIA, AMD and Intel GPUs. Having none is normal, so this always returns 0
    and simply leaves count at 0. Pair with gpu_free(). */
-int  gpu_init(GpuList *list);
+int  gpu_init(GpuList *list, int showDataless);
 int  gpu_init_with(GpuList *list, const GpuPaths *paths);
 
 /* Refreshes every GPU. Returns 0; a GPU that can't be read just loses its has* flags. */

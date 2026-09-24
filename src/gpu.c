@@ -600,7 +600,7 @@ static int has_data_source(const GpuInfo *g) {
     return g->usageSrc != SRC_NONE || g->pathVramTotal[0] || g->pathTemp[0];
 }
 
-/* Outside --gpu-info such devices are dropped, so they don't take up space in the display */
+/* Normally such devices are dropped, so they don't take up space in the display; --gpu-info keeps them */
 static void drop_dataless(GpuList *l) {
     size_t out = 0;
     for (size_t i = 0; i < l->count; i++)
@@ -638,17 +638,17 @@ int gpu_init_with(GpuList *list, const GpuPaths *paths) {
     if (list->nvml) nvml_discover(list, paths);
 
     /* WSL2 passes the GPU through as /dev/dxg (DirectX). Linux gets no usage, memory or
-       temperature from that, so it is only mentioned in the --gpu-info report. */
+       temperature from that, so it is left out of the display unless --gpu-info asks to keep it. */
     int wsl = access(WSL_DXG, F_OK) == 0;
     LOG(log, "WSL2: %s %s\n", WSL_DXG, wsl ? "exists" : "does not exist");
-    if (log && list->count == 0 && wsl) {
+    if ((log || paths->showDataless) && list->count == 0 && wsl) {
         GpuInfo *g = add_gpu(list);
         if (g) {
             copy_path(g->name, sizeof g->name, "DirectX GPU (WSL2)");
             LOG(log, "WSL2: the GPU is only reachable through DirectX; Linux can read no statistics from it\n");
         }
     }
-    if (!log) drop_dataless(list);
+    if (!paths->showDataless) drop_dataless(list);
 
     gpu_update(list);                                          /* baseline for the RC6 counters */
 
@@ -663,14 +663,14 @@ int gpu_init_with(GpuList *list, const GpuPaths *paths) {
             if (g->hasMem) fprintf(log, ", memory %.1f%c of %.1f%c", g->memUsed.value, g->memUsed.unit[0], g->memTotal.value, g->memTotal.unit[0]);
             if (g->hasTemp) fprintf(log, ", %.0f C", g->tempC);
             fprintf(log, "\n");
-            if (!has_data_source(g)) fprintf(log, "        nothing to read from this device, so it is not shown in the normal display\n");
+            if (!has_data_source(g)) fprintf(log, "        nothing to read from this device, so it is left out of the display unless --gpu-info is used\n");
         }
     }
     return 0;
 }
 
-int gpu_init(GpuList *list) {
-    GpuPaths defaults = { NULL, NULL, NULL, NULL };
+int gpu_init(GpuList *list, int showDataless) {
+    GpuPaths defaults = { NULL, NULL, NULL, NULL, showDataless };
     return gpu_init_with(list, &defaults);
 }
 
