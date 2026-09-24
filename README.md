@@ -1,0 +1,23 @@
+# sysmon
+
+## A CLI system monitor for Linux machines written in C.
+
+sysmon is a real-time system monitor for Linux terminals. It draws a colourful ASCII dashboard complete with live graphs for CPU, memory, GPU, and network activity, read/write information for each drive, per-core CPU information, and a navigable process list.
+
+## Features
+
+- **CPU**: core and thread count, uptime, per-core usage and clock speed, load graph with 60 second history.
+- **Memory**: main memory and swap usage, load graph with 60 second history.
+- **GPU**: displays detected GPU devices and their usage, memory, and temperature.
+- **Network**: upload and download rates for each interface, throughput graph 60 second history.
+- **Drives**: usage, size, current read/write information for each drive.
+- **Processes**: display all processes, sortable by PID, name, CPU & memory usage.
+- **Colour**: built to support 256 colour terminals, can support down to 8 colour terminals and black & white.
+- **Themes**: change between built-in themes with --themes, custom themes to come.
+- **Compact mode**: automatically adjust UI to fit the terminal, force with --compact.
+
+
+
+![Full layout](docs/full_layout.png)
+
+![Compact layout](docs/compact_layout.png)
