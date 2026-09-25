@@ -796,7 +796,7 @@ static void draw_controls(Ui *ui, Rect r) {
         draw_hints(ui, in.x + 1, in.y + i, in.w - 2, C_LOGO, &keys[i], &descs[i], 1);
 
     char foot[64];
-    snprintf(foot, sizeof foot, "v%s | by %s", SYSMON_VERSION, SYSMON_AUTHOR);
+    snprintf(foot, sizeof foot, "v%s", SYSMON_VERSION);
     scr_puts(s, in.x + 1, in.y + in.h - 1, in.w - 2, foot, STYLE(C_DIM, 0));
 }
 
