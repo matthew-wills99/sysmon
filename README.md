@@ -1,3 +1,5 @@
+![CI](https://github.com/matthew-wills99/sysmon/actions/workflows/ci.yml/badge.svg)
+
 # sysmon
 
 ## A CLI system monitor for Linux machines written in C.
