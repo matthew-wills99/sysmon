@@ -24,10 +24,8 @@ jobs:
       - name: Show compiler version
         run: ${{ matrix.cc }} --version
 
-      # Same flags as the Makefile, plus -Werror so any warning fails the build.
-      # Keep this in sync if you change CFLAGS in the Makefile.
       - name: Build
-        run: make CC=${{ matrix.cc }} CFLAGS="-O2 -Wall -Wextra -std=gnu11 -Werror"
+        run: make CC=${{ matrix.cc }} CFLAGS="-O2 -Wall -Wextra -std=gnu11 -Iinclude -Werror"
 
       - name: Smoke test
         run: |
