@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.cc }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Show compiler version
+        run: ${{ matrix.cc }} --version
+
+      # Same flags as the Makefile, plus -Werror so any warning fails the build.
+      # Keep this in sync if you change CFLAGS in the Makefile.
+      - name: Build
+        run: make CC=${{ matrix.cc }} CFLAGS="-O2 -Wall -Wextra -std=gnu11 -Werror"
+
+      - name: Smoke test
+        run: |
+          ./sysmon --version
+          ./sysmon --help
+
+      - name: Install and uninstall
+        run: |
+          sudo make install
+          /usr/local/bin/sysmon --version
+          sudo make uninstall
+          test ! -e /usr/local/bin/sysmon
