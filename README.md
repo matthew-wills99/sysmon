@@ -2,6 +2,8 @@
 
 # sysmon
 
+![Display gif](docs/display.gif)
+
 ## A CLI system monitor for Linux machines written in C.
 
 sysmon is a real-time system monitor for Linux terminals. It draws a colourful ASCII dashboard complete with live graphs for CPU, memory, GPU, and network activity, read/write information for each drive, per-core CPU information, and a navigable process list.
